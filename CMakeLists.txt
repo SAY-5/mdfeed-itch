@@ -18,6 +18,7 @@ add_compile_options(
 
 option(MDFEED_ITCH_ASAN "Build with AddressSanitizer" OFF)
 option(MDFEED_ITCH_UBSAN "Build with UndefinedBehaviorSanitizer" OFF)
+option(MDFEED_ITCH_TSAN "Build with ThreadSanitizer" OFF)
 option(MDFEED_ITCH_FUZZ "Build libFuzzer targets" OFF)
 option(MDFEED_ITCH_BENCH "Build benchmark binary" ON)
 
@@ -28,6 +29,10 @@ endif()
 if(MDFEED_ITCH_UBSAN)
   add_compile_options(-fsanitize=undefined -fno-sanitize-recover=undefined)
   add_link_options(-fsanitize=undefined)
+endif()
+if(MDFEED_ITCH_TSAN)
+  add_compile_options(-fsanitize=thread -g)
+  add_link_options(-fsanitize=thread)
 endif()
 
 include(FetchContent)
@@ -71,6 +76,11 @@ mdfeed_add_test(gap_detector_test    tests/unit/gap_detector_test.cpp)
 mdfeed_add_test(snapshot_client_test tests/unit/snapshot_client_test.cpp)
 mdfeed_add_test(multicast_test       tests/integration/multicast_test.cpp)
 mdfeed_add_test(gap_fill_test        tests/integration/gap_fill_test.cpp)
+
+mdfeed_add_test(parser_property_test      tests/property/parser_property_test.cpp)
+mdfeed_add_test(depth_book_property_test  tests/property/depth_book_property_test.cpp)
+mdfeed_add_test(gap_detector_property_test tests/property/gap_detector_property_test.cpp)
+mdfeed_add_test(tsan_stress_test           tests/integration/tsan_stress_test.cpp)
 
 if(MDFEED_ITCH_FUZZ)
   add_executable(parser_fuzz tests/fuzz/parser_fuzz.cpp)

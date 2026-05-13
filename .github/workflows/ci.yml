@@ -87,8 +87,32 @@ jobs:
             -DMDFEED_ITCH_FUZZ=ON
       - name: Build parser_fuzz
         run: cmake --build build-fuzz --target parser_fuzz -j
-      - name: Run fuzz smoke (5000 iters)
-        run: ./build-fuzz/parser_fuzz -runs=5000 -max_len=1024
+      - name: Run fuzz smoke (10000 iters)
+        run: ./build-fuzz/parser_fuzz -runs=10000 -max_len=1024
+
+  tsan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build
+      - name: Configure (TSan)
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DMDFEED_ITCH_TSAN=ON
+      - name: Build
+        run: cmake --build build -j
+      - name: Run TSan stress (GTEST_REPEAT=3)
+        env:
+          TSAN_OPTIONS: halt_on_error=1:second_deadlock_stack=1
+          GTEST_REPEAT: '3'
+        run: ./build/tsan_stress_test
+      - name: Run TSan over remaining suites
+        env:
+          TSAN_OPTIONS: halt_on_error=1
+        run: ctest --test-dir build --output-on-failure -E '^tsan_stress_test$'
 
   bench-smoke:
     runs-on: ubuntu-24.04
