@@ -1,0 +1,14 @@
+services:
+  handler:
+    build: .
+    image: mdfeed-itch:local
+    network_mode: host
+    command:
+      - --group
+      - 239.0.0.1
+      - --port
+      - "42424"
+      - --iface
+      - 127.0.0.1
+      - --duration-ms
+      - "5000"

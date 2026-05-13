@@ -1,0 +1,11 @@
+build/
+build-*/
+*.pcap
+*.dump
+core
+core.*
+.cache/
+compile_commands.json
+.DS_Store
+*.o
+*.a

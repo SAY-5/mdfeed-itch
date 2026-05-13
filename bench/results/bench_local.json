@@ -1,0 +1,15 @@
+{
+  "messages_total": 1000008,
+  "messages_applied": 1000000,
+  "elapsed_ns": 2834103833,
+  "throughput_msgs_per_sec": 352845,
+  "latency_ns": {
+    "min": 0,
+    "mean": 520.2,
+    "p50": 288,
+    "p95": 704,
+    "p99": 1280,
+    "p999": 2496,
+    "max": 30564500
+  }
+}
