@@ -147,21 +147,22 @@ TcpServer::~TcpServer() {
 }
 
 void TcpServer::close() {
-    if (fd_ >= 0) {
-        ::close(fd_);
-        fd_ = -1;
+    const int old = fd_.exchange(-1, std::memory_order_acq_rel);
+    if (old >= 0) {
+        ::close(old);
     }
 }
 
 bool TcpServer::listen(const std::string& bind_host, std::uint16_t port, std::string* err) {
     close();
-    fd_ = ::socket(AF_INET, SOCK_STREAM, 0);
-    if (fd_ < 0) {
+    const int s = ::socket(AF_INET, SOCK_STREAM, 0);
+    if (s < 0) {
         set_err(err, std::string("socket: ") + strerror(errno));
         return false;
     }
+    fd_.store(s, std::memory_order_release);
     int one = 1;
-    ::setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+    ::setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
@@ -170,35 +171,36 @@ bool TcpServer::listen(const std::string& bind_host, std::uint16_t port, std::st
         close();
         return false;
     }
-    if (::bind(fd_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+    if (::bind(s, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
         set_err(err, std::string("bind: ") + strerror(errno));
         close();
         return false;
     }
-    if (::listen(fd_, 4) < 0) {
+    if (::listen(s, 4) < 0) {
         set_err(err, std::string("listen: ") + strerror(errno));
         close();
         return false;
     }
     socklen_t alen = sizeof(addr);
-    ::getsockname(fd_, reinterpret_cast<sockaddr*>(&addr), &alen);
+    ::getsockname(s, reinterpret_cast<sockaddr*>(&addr), &alen);
     port_ = ntohs(addr.sin_port);
     return true;
 }
 
 int TcpServer::accept_one(int timeout_ms) {
-    if (fd_ < 0) return -1;
+    const int s = fd_.load(std::memory_order_acquire);
+    if (s < 0) return -1;
     fd_set rf;
     FD_ZERO(&rf);
-    FD_SET(fd_, &rf);
+    FD_SET(s, &rf);
     timeval tv{};
     tv.tv_sec = timeout_ms / 1000;
     tv.tv_usec = (timeout_ms % 1000) * 1000;
-    int rc = ::select(fd_ + 1, &rf, nullptr, nullptr, &tv);
+    int rc = ::select(s + 1, &rf, nullptr, nullptr, &tv);
     if (rc <= 0) return -1;
     sockaddr_in peer{};
     socklen_t plen = sizeof(peer);
-    return ::accept(fd_, reinterpret_cast<sockaddr*>(&peer), &plen);
+    return ::accept(s, reinterpret_cast<sockaddr*>(&peer), &plen);
 }
 
 }  // namespace mdfeed::net

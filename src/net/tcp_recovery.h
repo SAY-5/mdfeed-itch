@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -30,6 +31,9 @@ class TcpClient {
 };
 
 // Server-side single-connection helper used by tests (and the sim package).
+// The listening fd is held in an atomic so accept_one() (run by the server
+// thread) and close() (run by the controlling thread) can safely race on
+// shutdown without tripping ThreadSanitizer.
 class TcpServer {
   public:
     TcpServer() = default;
@@ -44,7 +48,7 @@ class TcpServer {
     void close();
 
   private:
-    int fd_{-1};
+    std::atomic<int> fd_{-1};
     std::uint16_t port_{0};
 };
 
