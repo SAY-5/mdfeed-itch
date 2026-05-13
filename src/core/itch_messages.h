@@ -68,7 +68,7 @@ struct OrderExecutedMsg {
 
 struct OrderExecutedWithPriceMsg {
     OrderExecutedMsg base;
-    char printable;       // 'Y'/'N'
+    char printable;  // 'Y'/'N'
     Price execution_price;
 };
 
@@ -109,17 +109,9 @@ struct TradeMsg {
     std::uint64_t match_number;
 };
 
-using AnyMessage = std::variant<
-    SystemEventMsg,
-    StockDirectoryMsg,
-    AddOrderMsg,
-    AddOrderMPIDMsg,
-    OrderExecutedMsg,
-    OrderExecutedWithPriceMsg,
-    OrderCancelMsg,
-    OrderDeleteMsg,
-    OrderReplaceMsg,
-    TradeMsg>;
+using AnyMessage = std::variant<SystemEventMsg, StockDirectoryMsg, AddOrderMsg, AddOrderMPIDMsg,
+                                OrderExecutedMsg, OrderExecutedWithPriceMsg, OrderCancelMsg,
+                                OrderDeleteMsg, OrderReplaceMsg, TradeMsg>;
 
 // Wire sizes including the 1-byte type code. The outer transport wraps each
 // message with a 2-byte big-endian length prefix.

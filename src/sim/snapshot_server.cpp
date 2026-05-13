@@ -4,7 +4,9 @@
 
 namespace mdfeed::sim {
 
-SnapshotServer::~SnapshotServer() { stop(); }
+SnapshotServer::~SnapshotServer() {
+    stop();
+}
 
 bool SnapshotServer::start(std::uint16_t port, SnapshotProvider provider, std::string* err) {
     stop();

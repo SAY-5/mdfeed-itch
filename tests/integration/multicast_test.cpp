@@ -1,10 +1,11 @@
+#include "net/multicast.h"
+
 #include <gtest/gtest.h>
 
 #include <chrono>
 #include <thread>
 
 #include "core/feed_handler.h"
-#include "net/multicast.h"
 #include "sim/publisher.h"
 
 using namespace mdfeed;

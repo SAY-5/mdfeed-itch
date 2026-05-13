@@ -27,7 +27,9 @@ bool set_nonblock(int fd, bool nb) {
 
 }  // namespace
 
-TcpClient::~TcpClient() { close(); }
+TcpClient::~TcpClient() {
+    close();
+}
 
 void TcpClient::close() {
     if (fd_ >= 0) {
@@ -110,10 +112,9 @@ bool tcp_recv_frame(int fd, std::vector<std::uint8_t>& out) {
         }
         got += static_cast<std::size_t>(n);
     }
-    const std::uint32_t len = (static_cast<std::uint32_t>(hdr[0]) << 24) |
-                              (static_cast<std::uint32_t>(hdr[1]) << 16) |
-                              (static_cast<std::uint32_t>(hdr[2]) << 8) |
-                              static_cast<std::uint32_t>(hdr[3]);
+    const std::uint32_t len =
+        (static_cast<std::uint32_t>(hdr[0]) << 24) | (static_cast<std::uint32_t>(hdr[1]) << 16) |
+        (static_cast<std::uint32_t>(hdr[2]) << 8) | static_cast<std::uint32_t>(hdr[3]);
     if (len == 0 || len > 16u * 1024u * 1024u) return false;
     out.assign(4, 0);
     out[0] = hdr[0];
@@ -141,7 +142,9 @@ bool TcpClient::recv_frame(std::vector<std::uint8_t>& out) {
     return tcp_recv_frame(fd_, out);
 }
 
-TcpServer::~TcpServer() { close(); }
+TcpServer::~TcpServer() {
+    close();
+}
 
 void TcpServer::close() {
     if (fd_ >= 0) {

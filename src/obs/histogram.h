@@ -11,7 +11,7 @@ namespace mdfeed::obs {
 //
 // Optimized for the hot ingest path: record() is branch-light and O(1).
 class Histogram {
-public:
+  public:
     Histogram();
 
     void record(std::uint64_t value_ns);
@@ -28,7 +28,7 @@ public:
     void merge(const Histogram& other);
     void reset();
 
-private:
+  private:
     static constexpr int kSubBucketBits = 6;  // 64
     static constexpr int kSubBuckets = 1 << kSubBucketBits;
     static constexpr int kBuckets = 32;

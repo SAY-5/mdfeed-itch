@@ -45,8 +45,7 @@ int Histogram::bucket_index(std::uint64_t value, int& sub) {
 
 std::uint64_t Histogram::bucket_lower_bound(int bucket, int sub) {
     if (bucket == 0) return static_cast<std::uint64_t>(sub) + 1;
-    return (static_cast<std::uint64_t>(kSubBuckets) + static_cast<std::uint64_t>(sub))
-           << bucket;
+    return (static_cast<std::uint64_t>(kSubBuckets) + static_cast<std::uint64_t>(sub)) << bucket;
 }
 
 void Histogram::record(std::uint64_t value_ns) {
@@ -83,8 +82,8 @@ std::uint64_t Histogram::percentile(double p) const {
     std::uint64_t running = 0;
     for (int b = 0; b < kBuckets; ++b) {
         for (int s = 0; s < kSubBuckets; ++s) {
-            running += counts_[static_cast<std::size_t>(b) * kSubBuckets +
-                               static_cast<std::size_t>(s)];
+            running +=
+                counts_[static_cast<std::size_t>(b) * kSubBuckets + static_cast<std::size_t>(s)];
             if (running >= target) return bucket_lower_bound(b, s);
         }
     }

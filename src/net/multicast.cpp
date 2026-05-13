@@ -20,7 +20,9 @@ void set_err(std::string* err, const std::string& s) {
 }
 }  // namespace
 
-MulticastReceiver::~MulticastReceiver() { close(); }
+MulticastReceiver::~MulticastReceiver() {
+    close();
+}
 
 void MulticastReceiver::close() {
     if (fd_ >= 0) {
@@ -97,7 +99,9 @@ int MulticastReceiver::recv(std::vector<std::uint8_t>& buf) {
     return static_cast<int>(n);
 }
 
-MulticastSender::~MulticastSender() { close(); }
+MulticastSender::~MulticastSender() {
+    close();
+}
 
 void MulticastSender::close() {
     if (fd_ >= 0) {
@@ -151,8 +155,8 @@ bool MulticastSender::open(const MulticastEndpoint& ep, std::string* err) {
 int MulticastSender::send(const std::uint8_t* data, std::size_t len) {
     if (fd_ < 0 || remote_.size() != sizeof(sockaddr_in)) return -1;
     const sockaddr_in* to = reinterpret_cast<const sockaddr_in*>(remote_.data());
-    const ssize_t n = ::sendto(fd_, data, len, 0, reinterpret_cast<const sockaddr*>(to),
-                               sizeof(*to));
+    const ssize_t n =
+        ::sendto(fd_, data, len, 0, reinterpret_cast<const sockaddr*>(to), sizeof(*to));
     if (n < 0) return -1;
     return static_cast<int>(n);
 }

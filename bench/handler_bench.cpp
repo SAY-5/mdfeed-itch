@@ -108,8 +108,8 @@ int main(int argc, char** argv) {
         }
         const auto lat = latency_from(hist);
 
-        emit(stdout, static_cast<std::uint64_t>(payloads.size()),
-             handler.stats().messages_applied, elapsed, lat);
+        emit(stdout, static_cast<std::uint64_t>(payloads.size()), handler.stats().messages_applied,
+             elapsed, lat);
 
         if (out_path) {
             FILE* f = std::fopen(out_path, "w");

@@ -8,9 +8,10 @@
 namespace mdfeed::itch {
 
 using OrderId = std::uint64_t;
-using Price = std::uint32_t;   // ITCH price is 4 bytes, scaled by 10000
+using Price = std::uint32_t;  // ITCH price is 4 bytes, scaled by 10000
 using Quantity = std::uint32_t;
-using Timestamp = std::uint64_t; // ITCH timestamp is 6 bytes nanoseconds since midnight; we widen to 8
+using Timestamp =
+    std::uint64_t;  // ITCH timestamp is 6 bytes nanoseconds since midnight; we widen to 8
 using StockLocate = std::uint16_t;
 using TrackingNumber = std::uint16_t;
 using SequenceNumber = std::uint64_t;

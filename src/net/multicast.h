@@ -14,7 +14,7 @@ struct MulticastEndpoint {
 };
 
 class MulticastReceiver {
-public:
+  public:
     MulticastReceiver() = default;
     ~MulticastReceiver();
     MulticastReceiver(const MulticastReceiver&) = delete;
@@ -30,13 +30,13 @@ public:
     // timeout; -1 on error.
     int recv(std::vector<std::uint8_t>& buf);
 
-private:
+  private:
     int fd_{-1};
     MulticastEndpoint ep_{};
 };
 
 class MulticastSender {
-public:
+  public:
     MulticastSender() = default;
     ~MulticastSender();
     MulticastSender(const MulticastSender&) = delete;
@@ -49,7 +49,7 @@ public:
 
     int send(const std::uint8_t* data, std::size_t len);
 
-private:
+  private:
     int fd_{-1};
     MulticastEndpoint ep_{};
     // Cached sockaddr_in storage; we keep it as raw bytes to keep the header

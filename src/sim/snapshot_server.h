@@ -16,7 +16,7 @@ namespace mdfeed::sim {
 // configured port == 0) and serves one snapshot per accepted connection from
 // a SnapshotProvider callback.
 class SnapshotServer {
-public:
+  public:
     // The provider returns the canonical book snapshot for a (stock_locate,
     // from_seq) request. last_applied_seq on the response indicates the
     // sequence number up to which the snapshot is consistent.
@@ -31,7 +31,7 @@ public:
     std::uint16_t bound_port() const { return server_.bound_port(); }
     std::uint64_t served_count() const { return served_.load(); }
 
-private:
+  private:
     void run();
 
     net::TcpServer server_;

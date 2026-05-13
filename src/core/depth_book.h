@@ -57,7 +57,7 @@ inline SymbolKey symbol_key(const Symbol& s) {
 // ladder map so updates beyond the top-N still adjust correctly when an inner
 // level is removed and a deeper level pops to the top.
 class SymbolBook {
-public:
+  public:
     explicit SymbolBook(std::size_t depth = kDefaultDepth) : depth_(depth) {}
 
     void add_order(OrderId id, Side side, Price price, Quantity qty, Timestamp ts);
@@ -79,7 +79,7 @@ public:
 
     bool invariants_ok() const;
 
-private:
+  private:
     void apply_level_delta(Side side, Price price, std::int64_t qty_delta,
                            std::int64_t count_delta);
     void refresh_top_bids();
@@ -99,7 +99,7 @@ private:
 
 // Owns a SymbolBook per symbol and exposes a callback for depth snapshots.
 class DepthBook {
-public:
+  public:
     using SnapshotCallback = std::function<void(const DepthSnapshot&)>;
 
     explicit DepthBook(std::size_t depth = kDefaultDepth) : depth_(depth) {}
@@ -124,7 +124,7 @@ public:
 
     DepthSnapshot snapshot(const Symbol& sym) const;
 
-private:
+  private:
     void emit_snapshot(const Symbol& sym, Timestamp ts);
 
     std::size_t depth_;

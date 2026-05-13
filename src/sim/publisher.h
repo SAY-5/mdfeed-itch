@@ -28,9 +28,8 @@ struct TransportHeader {
 constexpr std::size_t kTransportHeaderSize = 2 + 8;
 
 class MessageGenerator {
-public:
-    explicit MessageGenerator(std::uint64_t seed = 0xC0FFEEULL,
-                              std::size_t num_symbols = 8);
+  public:
+    explicit MessageGenerator(std::uint64_t seed = 0xC0FFEEULL, std::size_t num_symbols = 8);
 
     // Build one transport-framed datagram payload and place it in out.
     // Returns the bytes written, or 0 on encode failure.
@@ -42,7 +41,7 @@ public:
 
     const std::vector<itch::Symbol>& symbols() const { return symbols_; }
 
-private:
+  private:
     std::mt19937_64 rng_;
     std::vector<itch::Symbol> symbols_;
     std::vector<itch::OrderId> live_orders_;

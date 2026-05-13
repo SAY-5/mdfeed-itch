@@ -11,8 +11,7 @@ using namespace mdfeed;
 
 namespace {
 void usage(const char* prog) {
-    std::fprintf(stderr,
-                 "usage: %s --group <ip> --port <p> [--iface <ip>] [--duration-ms <ms>]\n",
+    std::fprintf(stderr, "usage: %s --group <ip> --port <p> [--iface <ip>] [--duration-ms <ms>]\n",
                  prog);
 }
 }  // namespace

@@ -11,7 +11,7 @@ namespace mdfeed::net {
 // length-prefixed snapshot-request frame, reads a single length-prefixed
 // response frame, and returns the bytes to the caller for decoding.
 class TcpClient {
-public:
+  public:
     TcpClient() = default;
     ~TcpClient();
     TcpClient(const TcpClient&) = delete;
@@ -25,13 +25,13 @@ public:
     void close();
     int fd() const { return fd_; }
 
-private:
+  private:
     int fd_{-1};
 };
 
 // Server-side single-connection helper used by tests (and the sim package).
 class TcpServer {
-public:
+  public:
     TcpServer() = default;
     ~TcpServer();
     TcpServer(const TcpServer&) = delete;
@@ -43,7 +43,7 @@ public:
     int accept_one(int timeout_ms);
     void close();
 
-private:
+  private:
     int fd_{-1};
     std::uint16_t port_{0};
 };

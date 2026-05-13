@@ -60,7 +60,8 @@ std::vector<std::vector<std::uint8_t>> MessageGenerator::directory_messages() {
 
 std::size_t MessageGenerator::next(std::vector<std::uint8_t>& out, TransportHeader& hdr_out) {
     // Choose a symbol and an action.
-    std::uniform_int_distribution<std::size_t> pick_sym(0, symbols_.empty() ? 0 : symbols_.size() - 1);
+    std::uniform_int_distribution<std::size_t> pick_sym(0,
+                                                        symbols_.empty() ? 0 : symbols_.size() - 1);
     std::uniform_int_distribution<int> action_dist(0, 99);
     const std::size_t si = pick_sym(rng_);
     const itch::Symbol& sym = symbols_[si];
@@ -98,7 +99,8 @@ std::size_t MessageGenerator::next(std::vector<std::uint8_t>& out, TransportHead
             m.stock_locate = live_locs_[oi];
             m.ts = next_order_id_++;
             m.order_id = oid;
-            std::uniform_int_distribution<itch::Quantity> cd(1, std::max<itch::Quantity>(1, live_qtys_[oi]));
+            std::uniform_int_distribution<itch::Quantity> cd(
+                1, std::max<itch::Quantity>(1, live_qtys_[oi]));
             m.canceled_shares = cd(rng_);
             if (m.canceled_shares >= live_qtys_[oi]) {
                 live_qtys_[oi] = 0;
@@ -116,7 +118,8 @@ std::size_t MessageGenerator::next(std::vector<std::uint8_t>& out, TransportHead
             m.stock_locate = live_locs_[oi];
             m.ts = next_order_id_++;
             m.order_id = oid;
-            std::uniform_int_distribution<itch::Quantity> ex(1, std::max<itch::Quantity>(1, live_qtys_[oi]));
+            std::uniform_int_distribution<itch::Quantity> ex(
+                1, std::max<itch::Quantity>(1, live_qtys_[oi]));
             m.executed_shares = ex(rng_);
             m.match_number = next_order_id_;
             if (m.executed_shares >= live_qtys_[oi]) {

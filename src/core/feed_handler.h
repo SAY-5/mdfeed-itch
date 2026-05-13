@@ -29,9 +29,9 @@ struct FeedHandlerStats {
 // RecoveryRequester. Snapshots returned by the recovery path are applied via
 // apply_snapshot().
 class FeedHandler {
-public:
-    using RecoveryRequester = std::function<bool(const itch::SnapshotRequest&,
-                                                 itch::SnapshotResponse&)>;
+  public:
+    using RecoveryRequester =
+        std::function<bool(const itch::SnapshotRequest&, itch::SnapshotResponse&)>;
 
     explicit FeedHandler(std::size_t depth = itch::kDefaultDepth) : book_(depth) {}
 
@@ -49,7 +49,7 @@ public:
     const FeedHandlerStats& stats() const { return stats_; }
     itch::GapDetector& gap_detector() { return gap_; }
 
-private:
+  private:
     itch::DepthBook book_;
     itch::GapDetector gap_;
     RecoveryRequester requester_;

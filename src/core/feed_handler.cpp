@@ -106,8 +106,8 @@ void FeedHandler::apply_snapshot(const itch::SnapshotResponse& snap) {
     // Build a list of order ids belonging to this symbol via the book's
     // public API. We do not have direct iteration on SymbolBook, so we use
     // a fresh approach: we replace the SymbolBook entirely via reassignment.
-    sym_book = itch::SymbolBook{snap.bids.size() > snap.asks.size() ? snap.bids.size()
-                                                                   : snap.asks.size()};
+    sym_book =
+        itch::SymbolBook{snap.bids.size() > snap.asks.size() ? snap.bids.size() : snap.asks.size()};
     // Synthesise one order per level so the ladder rebuilds with correct
     // counts and totals.
     itch::OrderId synthetic = 1ULL << 60;

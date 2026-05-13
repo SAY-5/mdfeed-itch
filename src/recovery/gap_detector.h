@@ -16,17 +16,17 @@ struct GapEvent {
 // Per-stock-locate sequence tracking. Sequence numbers are 1-based; the first
 // observed message must equal 1 (or whatever start() configures).
 class GapDetector {
-public:
+  public:
     void start(StockLocate loc, SequenceNumber first = 1) { expected_[loc] = first; }
 
     // observe() returns std::nullopt for in-order messages. For out-of-order
     // messages it returns a GapEvent describing the missing range. Duplicates
     // and stale messages return std::nullopt and are silently dropped.
     struct ObserveResult {
-        bool ok;          // true if this message advanced the sequence
-        bool is_gap;      // true if a gap was detected
-        bool is_stale;    // true if this message was older than expected
-        GapEvent gap;     // valid only if is_gap
+        bool ok;        // true if this message advanced the sequence
+        bool is_gap;    // true if a gap was detected
+        bool is_stale;  // true if this message was older than expected
+        GapEvent gap;   // valid only if is_gap
     };
     ObserveResult observe(StockLocate loc, SequenceNumber seq);
 
@@ -40,7 +40,7 @@ public:
 
     std::size_t tracked_streams() const { return expected_.size(); }
 
-private:
+  private:
     std::unordered_map<StockLocate, SequenceNumber> expected_;
 };
 

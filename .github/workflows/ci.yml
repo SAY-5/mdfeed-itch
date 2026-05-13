@@ -14,8 +14,11 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Install clang-format
-        run: sudo apt-get update && sudo apt-get install -y clang-format
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install clang-format (pinned)
+        run: pip install 'clang-format==22.1.5'
       - name: Check formatting
         run: |
           find src tests bench -name '*.cpp' -o -name '*.h' \
@@ -83,7 +86,7 @@ jobs:
             -DCMAKE_CXX_COMPILER=clang++ \
             -DMDFEED_ITCH_FUZZ=ON
       - name: Build parser_fuzz
-        run: cmake --build build-fuzz -j parser_fuzz
+        run: cmake --build build-fuzz --target parser_fuzz -j
       - name: Run fuzz smoke (5000 iters)
         run: ./build-fuzz/parser_fuzz -runs=5000 -max_len=1024
 
@@ -96,7 +99,7 @@ jobs:
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build bench
-        run: cmake --build build -j handler_bench
+        run: cmake --build build --target handler_bench -j
       - name: Run 100k bench
         run: ./build/handler_bench --count 100000
 

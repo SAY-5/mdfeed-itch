@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
-
 #include "recovery/snapshot_client.h"
+
+#include <gtest/gtest.h>
 
 using namespace mdfeed::itch;
 

@@ -88,9 +88,7 @@ ParseResult decode_frame(std::span<const std::uint8_t> bytes) {
     const std::uint8_t* p = body + 1;
     const std::size_t body_len = length;
 
-    auto check = [&](std::size_t expected) {
-        return body_len == expected;
-    };
+    auto check = [&](std::size_t expected) { return body_len == expected; };
 
     switch (static_cast<MessageType>(type)) {
         case MessageType::SystemEvent: {

@@ -1,10 +1,11 @@
+#include "core/parser.h"
+
 #include <gtest/gtest.h>
 
 #include <cstring>
 #include <vector>
 
 #include "core/itch_messages.h"
-#include "core/parser.h"
 
 using namespace mdfeed::itch;
 
