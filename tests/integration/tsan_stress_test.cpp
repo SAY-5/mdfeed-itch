@@ -104,7 +104,9 @@ TEST(TsanStress, ThreePublishersOneHandler) {
     EXPECT_GT(handler.stats().datagrams_in, 0u);
     EXPECT_GT(handler.stats().messages_applied, 0u);
 
-    for (const auto& sym : sim::MessageGenerator(1, 4).symbols()) {
+    // Bind the generator to a local so the symbol vector outlives the loop.
+    sim::MessageGenerator probe(1, 4);
+    for (const auto& sym : probe.symbols()) {
         const auto* sb = handler.book().find(sym);
         if (!sb) continue;
         EXPECT_TRUE(sb->invariants_ok())
