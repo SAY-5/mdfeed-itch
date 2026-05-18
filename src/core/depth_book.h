@@ -21,6 +21,10 @@ struct PriceLevel {
     Quantity total_qty{0};
     std::uint32_t order_count{0};
 };
+// Hot scan record. The packed 12-byte layout is intentional: see
+// docs/cache-padding-study.md for the measured comparison against padded and
+// cache-line-aligned variants.
+static_assert(sizeof(PriceLevel) == 12, "PriceLevel layout changed; revisit cache-padding-study");
 
 struct DepthSide {
     // Sorted: bids descending by price, asks ascending by price. Capped at
@@ -42,6 +46,9 @@ struct OrderState {
     Quantity qty{0};
     Timestamp ts{0};
 };
+// Power-of-two so two records fit one cache line exactly; see
+// docs/cache-padding-study.md.
+static_assert(sizeof(OrderState) == 32, "OrderState layout changed; revisit cache-padding-study");
 
 using SymbolKey = std::uint64_t;
 

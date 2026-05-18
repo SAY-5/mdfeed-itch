@@ -1,0 +1,4 @@
+{
+  "_note": "Conservative CI regression baseline. The bench-regress gate fails only if a 1M-message run drops more than 30% below throughput_msgs_per_sec. This floor (200000 msgs/sec) is set well under what a GitHub Actions ubuntu-24.04 runner achieves for the in-process parse+apply workload, so the gate catches real regressions without flaking on runner-to-runner variance. bench_local.json carries the developer-machine numbers.",
+  "throughput_msgs_per_sec": 200000
+}

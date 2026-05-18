@@ -61,19 +61,56 @@ Full module map: `ARCHITECTURE.md`.
 ## Bench numbers
 
 From `bench/results/bench_local.json`, hardware: Apple M2 Pro (10 cores),
-macOS 26.0.1, Apple clang 17.0.0, Release build (`-O3`). Single-threaded
-end-to-end parse + book-apply over 1,000,000 generated ITCH messages, with a
+macOS, Apple clang 17.0.0, Release build (`-O3`). Single-threaded end-to-end
+parse + book-apply over 1,000,000 generated ITCH messages, with a
 sampled-latency pass (`obs::Histogram` over 200,000 messages):
 
-| Metric                    | Value         |
-|---------------------------|---------------|
-| Sustained throughput      | 352,845 msgs/sec |
-| Latency P50               | 288 ns        |
-| Latency P95               | 704 ns        |
-| Latency P99               | 1,280 ns      |
-| Latency P99.9             | 2,496 ns      |
-| Latency mean              | 520.2 ns      |
-| Latency max               | 30,564,500 ns |
+| Metric                    | Value             |
+|---------------------------|-------------------|
+| Sustained throughput      | 1,590,991 msgs/sec |
+| Latency P50               | 250 ns            |
+| Latency P95               | 500 ns            |
+| Latency P99               | 664 ns            |
+| Latency P99.9             | 4,288 ns          |
+| Latency mean              | 293.0 ns          |
+
+### Per-message-type throughput
+
+Add / Execute / Cancel / Delete / Replace carry different book-mutation
+costs. `handler_bench` groups the generated messages by ITCH type and times a
+dedicated `DepthBook::apply` pass per type against a book pre-warmed with
+every Add, isolating each type's cost:
+
+| Type    | Cost shape                              | Throughput (msgs/sec) |
+|---------|-----------------------------------------|-----------------------|
+| Add     | insert order, maybe create price level  | ~1,978,000            |
+| Execute | reduce qty on a live level              | ~1,091,000            |
+| Cancel  | reduce qty on a live level              | ~1,020,000            |
+| Delete  | erase order, maybe drop a price level   | ~788,000              |
+| Replace | delete + add                            | ~505,000              |
+
+Add is fastest because it never has to locate and may extend the ladder
+in-place; Replace is slowest because it pays a delete and an add plus two
+top-of-book refreshes.
+
+### 1M-message multicast loopback
+
+`multicast_bench` pushes the 1M-datagram feed through a real UDP multicast
+group on `127.0.0.1` from a sender thread to a receiver thread. On the
+reference machine the receiver delivered 1,000,008 of 1,000,008 datagrams
+(100%, zero gaps detected) at ~144,000 datagrams/sec un-throttled. The
+loopback datagram-delivery ceiling is well below the in-process parse+apply
+rate above, so the network path, not the handler, is the scaling limit on a
+single host. UDP is lossy by design; on a busier host the bench reports the
+delivered fraction honestly and a `--pace-us` flag trades wall time for
+delivery rate.
+
+### Cache-line padding study
+
+`bench/cache_study.cpp` compares the packed 12-byte `PriceLevel` against
+16-byte padded and 64-byte-aligned variants over a top-of-book scan. The
+packed layout is never slower; padding only enlarges the working set. Full
+write-up and the reasoning: `docs/cache-padding-study.md`.
 
 Gap-fill recovery test: 1,500 messages published over multicast loopback,
 every 100th packet dropped at the receiver. The handler detects every gap,
@@ -85,7 +122,19 @@ To reproduce:
 ```
 make build
 ./build/handler_bench --count 1000000 --out bench/results/bench_local.json
+make bench-multicast            # 1M-message multicast loopback run
+make cache-study                # cache-line padding comparison
+make bench-regress              # 30% throughput-drift regression gate
 ```
+
+### Regression gate
+
+`make bench-regress` runs a 1M-message bench and fails if throughput drops
+more than 30% below the committed baseline in
+`bench/results/bench_ci_baseline.json`. The CI baseline is deliberately
+conservative so the gate catches real regressions without flaking on
+runner-to-runner variance; `bench/results/bench_local.json` carries the
+developer-machine numbers. The gate runs in CI as the `bench-regress` job.
 
 ## What this is NOT
 

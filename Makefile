@@ -1,7 +1,10 @@
-.PHONY: all configure build test bench asan ubsan fuzz fmt clean
+.PHONY: all configure build test bench bench-regress bench-multicast cache-study asan ubsan fuzz fmt clean
 
 BUILD_DIR ?= build
 CMAKE_FLAGS ?=
+BENCH_COUNT ?= 1000000
+BENCH_BASELINE ?= bench/results/bench_ci_baseline.json
+BENCH_DRIFT ?= 0.30
 
 all: build
 
@@ -15,7 +18,19 @@ test: build
 	ctest --test-dir $(BUILD_DIR) --output-on-failure
 
 bench: build
-	$(BUILD_DIR)/handler_bench
+	$(BUILD_DIR)/handler_bench --count $(BENCH_COUNT)
+
+# Regression gate: fails if throughput drifts more than BENCH_DRIFT below the
+# committed baseline. Hermetic; no network, runs in CI.
+bench-regress: build
+	$(BUILD_DIR)/handler_bench --count $(BENCH_COUNT) \
+		--regress $(BENCH_BASELINE) --drift $(BENCH_DRIFT)
+
+bench-multicast: build
+	$(BUILD_DIR)/multicast_bench --count $(BENCH_COUNT)
+
+cache-study: build
+	$(BUILD_DIR)/cache_study
 
 asan:
 	cmake -S . -B build-asan -DMDFEED_ITCH_ASAN=ON -DMDFEED_ITCH_UBSAN=ON -DCMAKE_BUILD_TYPE=Debug

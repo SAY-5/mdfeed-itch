@@ -1,6 +1,7 @@
 #include "core/feed_handler.h"
 
 #include <cstring>
+#include <variant>
 
 #include "sim/publisher.h"
 
@@ -15,6 +16,29 @@ inline std::uint64_t read_u64(const std::uint8_t* p) {
     std::uint64_t v = 0;
     for (int i = 0; i < 8; ++i) v = (v << 8) | static_cast<std::uint64_t>(p[i]);
     return v;
+}
+
+void tally_type(PerTypeCounters& c, const itch::AnyMessage& msg) {
+    std::visit(
+        [&](auto&& m) {
+            using T = std::decay_t<decltype(m)>;
+            if constexpr (std::is_same_v<T, itch::AddOrderMsg> ||
+                          std::is_same_v<T, itch::AddOrderMPIDMsg>) {
+                c.add += 1;
+            } else if constexpr (std::is_same_v<T, itch::OrderExecutedMsg> ||
+                                 std::is_same_v<T, itch::OrderExecutedWithPriceMsg>) {
+                c.execute += 1;
+            } else if constexpr (std::is_same_v<T, itch::OrderCancelMsg>) {
+                c.cancel += 1;
+            } else if constexpr (std::is_same_v<T, itch::OrderDeleteMsg>) {
+                c.delete_ += 1;
+            } else if constexpr (std::is_same_v<T, itch::OrderReplaceMsg>) {
+                c.replace += 1;
+            } else {
+                c.other += 1;
+            }
+        },
+        msg);
 }
 
 }  // namespace
@@ -83,6 +107,7 @@ bool FeedHandler::on_datagram(const std::uint8_t* data, std::size_t len) {
     }
     if (book_.apply(*pr.message)) {
         stats_.messages_applied += 1;
+        tally_type(stats_.by_type, *pr.message);
     }
     return true;
 }

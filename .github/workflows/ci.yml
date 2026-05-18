@@ -122,10 +122,25 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y g++ cmake ninja-build
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-      - name: Build bench
-        run: cmake --build build --target handler_bench -j
+      - name: Build bench targets
+        run: cmake --build build --target handler_bench cache_study multicast_bench -j
       - name: Run 100k bench
         run: ./build/handler_bench --count 100000
+      - name: Cache-line padding study
+        run: ./build/cache_study
+
+  bench-regress:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        run: sudo apt-get update && sudo apt-get install -y g++ cmake ninja-build
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build bench
+        run: cmake --build build --target handler_bench -j
+      - name: Regression gate (1M messages, 30% drift)
+        run: make bench-regress BUILD_DIR=build BENCH_COUNT=1000000
 
   docker:
     runs-on: ubuntu-24.04

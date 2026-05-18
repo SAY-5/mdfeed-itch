@@ -92,4 +92,10 @@ endif()
 if(MDFEED_ITCH_BENCH)
   add_executable(handler_bench bench/handler_bench.cpp)
   target_link_libraries(handler_bench PRIVATE mdfeed_itch_core)
+
+  add_executable(multicast_bench bench/multicast_bench.cpp)
+  target_link_libraries(multicast_bench PRIVATE mdfeed_itch_core)
+
+  add_executable(cache_study bench/cache_study.cpp)
+  target_link_libraries(cache_study PRIVATE mdfeed_itch_core)
 endif()

@@ -13,6 +13,18 @@
 
 namespace mdfeed::core {
 
+// Per-message-type applied counters, indexed by MessageType. Add / Modify /
+// Cancel / Execute carry different book-mutation costs, so the bench reports
+// them separately.
+struct PerTypeCounters {
+    std::uint64_t add{0};      // 'A' + 'F'
+    std::uint64_t execute{0};  // 'E' + 'C'
+    std::uint64_t cancel{0};   // 'X'
+    std::uint64_t delete_{0};  // 'D'
+    std::uint64_t replace{0};  // 'U'
+    std::uint64_t other{0};    // 'S' 'R' 'P'
+};
+
 struct FeedHandlerStats {
     std::uint64_t bytes_in{0};
     std::uint64_t datagrams_in{0};
@@ -22,6 +34,7 @@ struct FeedHandlerStats {
     std::uint64_t snapshots_requested{0};
     std::uint64_t snapshots_applied{0};
     std::uint64_t stale_msgs{0};
+    PerTypeCounters by_type{};
 };
 
 // FeedHandler decodes the transport header, runs gap detection, and applies

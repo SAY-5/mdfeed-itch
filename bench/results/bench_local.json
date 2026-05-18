@@ -1,15 +1,30 @@
 {
   "messages_total": 1000008,
   "messages_applied": 1000000,
-  "elapsed_ns": 2834103833,
-  "throughput_msgs_per_sec": 352845,
+  "elapsed_ns": 628539250,
+  "throughput_msgs_per_sec": 1590991,
   "latency_ns": {
     "min": 0,
-    "mean": 520.2,
-    "p50": 288,
-    "p95": 704,
-    "p99": 1280,
-    "p999": 2496,
-    "max": 30564500
+    "mean": 293.0,
+    "p50": 250,
+    "p95": 500,
+    "p99": 664,
+    "p999": 4288,
+    "max": 411917
+  },
+  "applied_by_type": {
+    "add": 499660,
+    "execute": 150204,
+    "cancel": 200397,
+    "delete": 99601,
+    "replace": 50138,
+    "other": 0
+  },
+  "throughput_by_type": {
+    "add": 1978354,
+    "execute": 1091078,
+    "cancel": 1020136,
+    "delete": 788523,
+    "replace": 504805
   }
 }
