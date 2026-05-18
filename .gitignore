@@ -1,6 +1,8 @@
 build/
 build-*/
 *.pcap
+# committed pcap-replay test inputs are an exception to the *.pcap rule
+!tests/pcap/*.pcap
 *.dump
 # core dump files (anchored to top level so src/core/ is not ignored)
 /core

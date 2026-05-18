@@ -1,4 +1,4 @@
-.PHONY: all configure build test bench bench-regress bench-multicast cache-study asan ubsan fuzz fmt clean
+.PHONY: all configure build test bench bench-regress bench-multicast cache-study pcaps asan ubsan fuzz fmt clean
 
 BUILD_DIR ?= build
 CMAKE_FLAGS ?=
@@ -31,6 +31,11 @@ bench-multicast: build
 
 cache-study: build
 	$(BUILD_DIR)/cache_study
+
+# Regenerate the committed pcap test inputs. The output is byte-deterministic,
+# so this should leave tests/pcap/ unchanged unless the generator changed.
+pcaps: build
+	$(BUILD_DIR)/pcap_gen tests/pcap
 
 asan:
 	cmake -S . -B build-asan -DMDFEED_ITCH_ASAN=ON -DMDFEED_ITCH_UBSAN=ON -DCMAKE_BUILD_TYPE=Debug

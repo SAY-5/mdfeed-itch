@@ -29,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
-        run: sudo apt-get update && sudo apt-get install -y g++ cmake ninja-build
+        run: sudo apt-get update && sudo apt-get install -y g++ cmake ninja-build libpcap-dev
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
       - name: Build
@@ -38,13 +38,17 @@ jobs:
         run: ctest --test-dir build --output-on-failure -E '^(multicast_test|gap_fill_test)$'
       - name: Integration tests (multicast + gap-fill)
         run: ctest --test-dir build --output-on-failure -R '^(multicast_test|gap_fill_test)$'
+      - name: pcap replay smoke (synthetic + gap captures)
+        run: |
+          ./build/pcap_replay --pcap tests/pcap/itch_synthetic.pcap --speedup 0
+          ./build/pcap_replay --pcap tests/pcap/itch_gap.pcap --speedup 0 --skip-gaps
 
   build-clang:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
-        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build libpcap-dev
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++
       - name: Build
@@ -57,7 +61,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
-        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build libpcap-dev
       - name: Configure (ASan+UBSan)
         run: |
           cmake -S . -B build -G Ninja \
@@ -78,7 +82,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
-        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build libpcap-dev
       - name: Configure (libFuzzer)
         run: |
           cmake -S . -B build-fuzz -G Ninja \
@@ -95,7 +99,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
-        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build libpcap-dev
       - name: Configure (TSan)
         run: |
           cmake -S . -B build -G Ninja \
@@ -119,7 +123,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
-        run: sudo apt-get update && sudo apt-get install -y g++ cmake ninja-build
+        run: sudo apt-get update && sudo apt-get install -y g++ cmake ninja-build libpcap-dev
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build bench targets
@@ -134,7 +138,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
-        run: sudo apt-get update && sudo apt-get install -y g++ cmake ninja-build
+        run: sudo apt-get update && sudo apt-get install -y g++ cmake ninja-build libpcap-dev
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build bench

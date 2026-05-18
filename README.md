@@ -136,6 +136,30 @@ conservative so the gate catches real regressions without flaking on
 runner-to-runner variance; `bench/results/bench_local.json` carries the
 developer-machine numbers. The gate runs in CI as the `bench-regress` job.
 
+## pcap replay
+
+`pcap_replay` reads a libpcap-format capture of ITCH multicast packets and
+replays the datagrams through the same `FeedHandler` as the live multicast
+path: identical decode, gap detection, and book maintenance, sourced from a
+file. It uses libpcap (`pcap_open_offline` / `pcap_next_ex`); install
+`libpcap-dev` (Debian/Ubuntu) or `libpcap` before building.
+
+```
+make build
+./build/pcap_replay --pcap tests/pcap/itch_synthetic.pcap --speedup 0
+./build/pcap_replay --pcap tests/pcap/itch_gap.pcap --speedup 0 --skip-gaps
+```
+
+CLI flags: `--pcap <path>`, `--speedup <N>` (rate multiplier, `0` = as fast as
+possible), `--start-offset <secs>`, `--stop-after <count>`, `--skip-gaps`.
+
+Two captures are committed under `tests/pcap/`: `itch_synthetic.pcap`
+(1000 ITCH messages, contiguous sequences) and `itch_gap.pcap` (the same with
+transport sequence 500..510 omitted). Replaying the gap capture surfaces
+exactly one gap with missing range `[500, 510]`. Both are byte-deterministic
+output of `pcap_gen`; regenerate with `make pcaps`. Full write-up:
+`docs/pcap-replay.md`.
+
 ## What this is NOT
 
 - **No production exchange connectivity.** Loopback multicast only. No
@@ -143,7 +167,8 @@ developer-machine numbers. The gate runs in CI as the `bench-regress` job.
 - **No UDP unicast.** That is `SAY-5/mdfeed-handler`.
 - **No FIX.** Use `SAY-5/orderbook-fix` for order-entry over FIX.
 - **No order entry at all.** This is read-side market data.
-- **No full historical replay.** No `.itch` file ingestion. No PCAP loader.
+- **No `.itch` flat-file ingestion.** The offline path is a libpcap replay
+  (`pcap_replay`), not a raw NASDAQ `.itch` file loader.
 - **No IGMPv3 source-specific multicast.** ASM only.
 - **No kernel-bypass.** POSIX sockets only. No DPDK, no Solarflare onload,
   no AF_XDP.
@@ -184,14 +209,18 @@ mdfeed-itch/
 │   ├── net/         # multicast and TCP socket helpers
 │   ├── recovery/    # gap detector, snapshot client
 │   ├── sim/         # publisher, snapshot server
+│   ├── pcap/        # libpcap-format offline capture I/O
 │   ├── obs/         # clock, histogram
+│   ├── pcap_replay.cpp  # offline pcap replay tool
+│   ├── pcap_gen.cpp     # test-pcap generator
 │   └── main.cpp
 ├── tests/
 │   ├── unit/        # parser, depth book, gap detector, snapshot client
 │   ├── fuzz/        # libFuzzer target for the parser
-│   └── integration/ # multicast loopback, gap-fill recovery
-├── bench/           # handler bench, results
-├── docs/            # itch-wire, depth-book, gap-fill-recovery, differs
+│   ├── pcap/        # committed pcap-replay test captures
+│   └── integration/ # multicast loopback, gap-fill recovery, pcap replay
+├── bench/           # handler bench, multicast bench, cache study, results
+├── docs/            # itch-wire, depth-book, gap-fill-recovery, pcap-replay, ...
 └── .github/workflows/ci.yml
 ```
 

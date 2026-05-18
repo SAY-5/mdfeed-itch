@@ -46,9 +46,25 @@ class FeedHandler {
     using RecoveryRequester =
         std::function<bool(const itch::SnapshotRequest&, itch::SnapshotResponse&)>;
 
+    // Invoked once per detected gap with the missing sequence range, before
+    // any recovery attempt. The range is inclusive: [first_missing,
+    // last_missing]. Useful for offline gap accounting (pcap replay) where
+    // there is no live recovery channel.
+    using GapObserver =
+        std::function<void(itch::StockLocate loc, itch::SequenceNumber first_missing,
+                           itch::SequenceNumber last_missing)>;
+
     explicit FeedHandler(std::size_t depth = itch::kDefaultDepth) : book_(depth) {}
 
     void set_recovery_requester(RecoveryRequester r) { requester_ = std::move(r); }
+    void set_gap_observer(GapObserver g) { gap_observer_ = std::move(g); }
+
+    // When no recovery requester is set, a detected gap normally stalls the
+    // stream because expected sequence is never advanced. Enabling skip-mode
+    // makes the handler step expected past the gap so replay continues; the
+    // gap is still reported once via the GapObserver. Off by default to keep
+    // the live recovery semantics unchanged.
+    void set_skip_gaps(bool on) { skip_gaps_ = on; }
 
     // Apply one multicast datagram payload (transport header + ITCH frame).
     // Returns true if the payload was applied (or successfully recovered).
@@ -66,6 +82,8 @@ class FeedHandler {
     itch::DepthBook book_;
     itch::GapDetector gap_;
     RecoveryRequester requester_;
+    GapObserver gap_observer_;
+    bool skip_gaps_{false};
     FeedHandlerStats stats_;
 };
 

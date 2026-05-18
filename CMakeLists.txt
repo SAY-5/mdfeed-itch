@@ -54,13 +54,27 @@ add_library(mdfeed_itch_core STATIC
   src/recovery/snapshot_client.cpp
   src/sim/publisher.cpp
   src/sim/snapshot_server.cpp
+  src/pcap/pcap_io.cpp
   src/obs/histogram.cpp
   src/obs/clock.cpp
 )
 target_include_directories(mdfeed_itch_core PUBLIC src)
 
+# libpcap backs the offline pcap-replay path (pcap_open_offline / pcap_next_ex).
+find_library(PCAP_LIBRARY NAMES pcap)
+if(NOT PCAP_LIBRARY)
+  message(FATAL_ERROR "libpcap not found; install libpcap-dev (apt) or libpcap")
+endif()
+target_link_libraries(mdfeed_itch_core PUBLIC ${PCAP_LIBRARY})
+
 add_executable(mdfeed_itch src/main.cpp)
 target_link_libraries(mdfeed_itch PRIVATE mdfeed_itch_core)
+
+add_executable(pcap_replay src/pcap_replay.cpp)
+target_link_libraries(pcap_replay PRIVATE mdfeed_itch_core)
+
+add_executable(pcap_gen src/pcap_gen.cpp)
+target_link_libraries(pcap_gen PRIVATE mdfeed_itch_core)
 
 enable_testing()
 
@@ -81,6 +95,12 @@ mdfeed_add_test(parser_property_test      tests/property/parser_property_test.cp
 mdfeed_add_test(depth_book_property_test  tests/property/depth_book_property_test.cpp)
 mdfeed_add_test(gap_detector_property_test tests/property/gap_detector_property_test.cpp)
 mdfeed_add_test(tsan_stress_test           tests/integration/tsan_stress_test.cpp)
+
+mdfeed_add_test(pcap_replay_test           tests/integration/pcap_replay_test.cpp)
+# The pcap_replay test reads the committed captures under tests/pcap/; pass
+# their absolute location so the test is independent of the working directory.
+target_compile_definitions(pcap_replay_test
+  PRIVATE PCAP_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/pcap")
 
 if(MDFEED_ITCH_FUZZ)
   add_executable(parser_fuzz tests/fuzz/parser_fuzz.cpp)

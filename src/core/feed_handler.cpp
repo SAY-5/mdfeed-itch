@@ -64,6 +64,13 @@ bool FeedHandler::on_datagram(const std::uint8_t* data, std::size_t len) {
         }
         if (obs.is_gap) {
             stats_.gaps_detected += 1;
+            // Report the missing range exactly once. The detector's gap.expected
+            // is the first missing sequence; gap.received is the first sequence
+            // that arrived after the gap, so the last missing sequence is
+            // gap.received - 1.
+            if (gap_observer_) {
+                gap_observer_(loc, obs.gap.expected, obs.gap.received - 1);
+            }
             if (requester_) {
                 itch::SnapshotRequest req{};
                 req.stock_locate = loc;
@@ -86,6 +93,13 @@ bool FeedHandler::on_datagram(const std::uint8_t* data, std::size_t len) {
                 } else {
                     return false;
                 }
+            } else if (skip_gaps_) {
+                // No recovery channel, but skip-mode is on: step the expected
+                // sequence past the gap so the rest of the stream is treated
+                // as in-order, then fall through and apply the current
+                // message. The missing messages stay missing; this is gap
+                // accounting, not recovery.
+                gap_.set_expected(loc, seq);
             } else {
                 return false;
             }

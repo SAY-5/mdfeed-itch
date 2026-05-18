@@ -38,6 +38,9 @@ publisher (sim) ─── multicast UDP (239.0.0.x) ───► MulticastReceiv
 | `src/recovery/snapshot_client.cpp` | Snapshot frame encode/decode             |
 | `src/sim/publisher.cpp`    | Deterministic ITCH message generator             |
 | `src/sim/snapshot_server.cpp` | In-test snapshot server                       |
+| `src/pcap/pcap_io.cpp`     | libpcap-format offline capture reader / writer   |
+| `src/pcap_replay.cpp`      | Offline pcap replay tool                         |
+| `src/pcap_gen.cpp`         | Generator for the committed pcap test captures   |
 | `src/obs/clock.cpp`        | `steady_clock`-based monotonic nanosecond clock  |
 | `src/obs/histogram.cpp`    | Log-linear latency histogram                     |
 
@@ -71,14 +74,25 @@ relevant setsockopt calls are:
 Tests pick deterministic ports keyed off the PID to avoid collisions when
 multiple test binaries run in parallel.
 
+## Offline pcap replay
+
+`pcap_replay` reads a libpcap capture of ITCH multicast packets and replays
+the datagrams through the same `FeedHandler` as the live path. The capture is
+an Ethernet / IPv4 / UDP framing of the transport datagram; the reader strips
+the fixed 42-byte header prefix. See `docs/pcap-replay.md` for the CLI, the
+capture format, and the committed test inputs.
+
 ## Build matrix
 
 | Job in CI       | Toolchain             | Purpose                              |
 |-----------------|-----------------------|--------------------------------------|
 | format-check    | clang-format          | Style enforcement                    |
-| build-gcc       | g++ + libstdc++       | Default Linux build, all tests       |
+| build-gcc       | g++ + libstdc++       | Default Linux build, all tests, pcap replay smoke |
 | build-clang     | clang++ + libstdc++   | Clang build, all tests               |
 | asan-ubsan      | clang++ + ASan + UBSan| Sanitized run of every test          |
-| fuzz-smoke      | clang++ + libFuzzer   | 5,000 iters of `parser_fuzz`         |
-| bench-smoke     | g++                   | 100,000-message bench, smoke         |
+| fuzz-smoke      | clang++ + libFuzzer   | 10,000 iters of `parser_fuzz`        |
+| bench-smoke     | g++                   | 100,000-message bench + cache study  |
+| bench-regress   | g++                   | 1M-message throughput regression gate |
 | docker          | buildx                | amd64 + arm64 multi-platform image   |
+
+All build jobs install `libpcap-dev`, which the offline replay path links.
