@@ -156,8 +156,10 @@ possible), `--start-offset <secs>`, `--stop-after <count>`, `--skip-gaps`.
 Two captures are committed under `tests/pcap/`: `itch_synthetic.pcap`
 (1000 ITCH messages, contiguous sequences) and `itch_gap.pcap` (the same with
 transport sequence 500..510 omitted). Replaying the gap capture surfaces
-exactly one gap with missing range `[500, 510]`. Both are byte-deterministic
-output of `pcap_gen`; regenerate with `make pcaps`. Full write-up:
+exactly one gap with missing range `[500, 510]`. Both come from `pcap_gen`;
+regenerate with `make pcaps`. The replay test validates the handler against
+an independent direct decode of the committed capture, so it is robust
+regardless of which platform generated the pcap. Full write-up:
 `docs/pcap-replay.md`.
 
 ## What this is NOT

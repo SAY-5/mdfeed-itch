@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <span>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "core/depth_book.h"
@@ -25,20 +27,24 @@ std::string pcap_path(const char* name) {
     return std::string(PCAP_DIR) + "/" + name;
 }
 
-// Build the reference book by regenerating the exact message stream the pcap
-// generator used (seed 0xCAFE, one symbol, 1000 messages) and applying every
-// message directly to a DepthBook. This is the simulator's authoritative
-// view, independent of the pcap path.
-itch::DepthBook reference_book(itch::Symbol& sym_out) {
-    sim::MessageGenerator gen(0xCAFE, 1);
-    sym_out = gen.symbols().front();
+// Build the reference book straight from the capture: read every packet, strip
+// the transport header, decode the ITCH frame, and apply it directly to a
+// DepthBook. This bypasses the FeedHandler's gap-detection and recovery path
+// entirely, so it is an independent reconstruction of the same committed
+// bytes. The simulator is not re-run here on purpose: std::uniform_int_-
+// distribution is not portable across standard libraries, so regenerating the
+// stream would diverge from the committed pcap on a different platform. The
+// pcap is the authoritative simulator output; decoding it is the reference.
+itch::DepthBook reference_book_from_pcap(const std::string& path) {
+    pcap::PcapReader reader;
+    std::string err;
+    EXPECT_TRUE(reader.open(path, &err)) << err;
     itch::DepthBook book(10);
-    std::vector<std::uint8_t> buf;
-    sim::TransportHeader hdr{};
-    for (int i = 0; i < 1000; ++i) {
-        if (!gen.next(buf, hdr)) continue;
-        const std::uint8_t* body = buf.data() + sim::kTransportHeaderSize;
-        const std::size_t body_len = buf.size() - sim::kTransportHeaderSize;
+    pcap::PcapRecord rec;
+    while (reader.next(rec)) {
+        if (rec.payload.size() <= sim::kTransportHeaderSize) continue;
+        const std::uint8_t* body = rec.payload.data() + sim::kTransportHeaderSize;
+        const std::size_t body_len = rec.payload.size() - sim::kTransportHeaderSize;
         auto pr = itch::decode_frame(std::span<const std::uint8_t>(body, body_len));
         if (pr.status == itch::ParseStatus::Ok && pr.message) book.apply(*pr.message);
     }
@@ -69,12 +75,33 @@ void expect_books_equal(const itch::SymbolBook& a, const itch::SymbolBook& b,
 
 }  // namespace
 
-// Replaying the synthetic pcap through the FeedHandler must reproduce the
-// simulator's reference book exactly: same levels, prices, quantities, counts.
-TEST(PcapReplay, SyntheticMatchesSimulatorReference) {
+// The simulator uses a single symbol; recover it from the capture by decoding
+// the first Add-order message.
+itch::Symbol symbol_from_pcap(const std::string& path) {
     pcap::PcapReader reader;
     std::string err;
-    ASSERT_TRUE(reader.open(pcap_path("itch_synthetic.pcap"), &err)) << err;
+    EXPECT_TRUE(reader.open(path, &err)) << err;
+    pcap::PcapRecord rec;
+    while (reader.next(rec)) {
+        if (rec.payload.size() <= sim::kTransportHeaderSize) continue;
+        const std::uint8_t* body = rec.payload.data() + sim::kTransportHeaderSize;
+        const std::size_t body_len = rec.payload.size() - sim::kTransportHeaderSize;
+        auto pr = itch::decode_frame(std::span<const std::uint8_t>(body, body_len));
+        if (pr.status != itch::ParseStatus::Ok || !pr.message) continue;
+        if (const auto* a = std::get_if<itch::AddOrderMsg>(&*pr.message)) return a->symbol;
+    }
+    return itch::Symbol{};
+}
+
+// Replaying the synthetic pcap through the FeedHandler must reproduce the
+// simulator's reference book exactly: same levels, prices, quantities, counts.
+// The reference is an independent direct decode of the same capture.
+TEST(PcapReplay, SyntheticMatchesSimulatorReference) {
+    const std::string path = pcap_path("itch_synthetic.pcap");
+
+    pcap::PcapReader reader;
+    std::string err;
+    ASSERT_TRUE(reader.open(path, &err)) << err;
 
     core::FeedHandler handler(10);
     pcap::PcapRecord rec;
@@ -89,13 +116,15 @@ TEST(PcapReplay, SyntheticMatchesSimulatorReference) {
     EXPECT_EQ(handler.stats().parse_errors, 0u);
     EXPECT_EQ(handler.stats().messages_applied, 1000u);
 
-    itch::Symbol sym{};
-    const itch::DepthBook ref = reference_book(sym);
+    const itch::Symbol sym = symbol_from_pcap(path);
+    const itch::DepthBook ref = reference_book_from_pcap(path);
     const itch::SymbolBook* hb = handler.book().find(sym);
     const itch::SymbolBook* rb = ref.find(sym);
     ASSERT_NE(hb, nullptr);
     ASSERT_NE(rb, nullptr);
     EXPECT_TRUE(hb->invariants_ok());
+    // The book is non-trivial: at least one side carries levels.
+    EXPECT_FALSE(hb->bids().levels.empty() && hb->asks().levels.empty());
     expect_books_equal(*hb, *rb, "synthetic");
 }
 
