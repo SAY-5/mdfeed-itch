@@ -126,6 +126,10 @@ class DepthBook {
     // Number of distinct symbols ever seen.
     std::size_t symbol_count() const { return books_.size(); }
 
+    // Every symbol the book currently tracks, in unspecified order. Used by
+    // the snapshot publisher to take a consistent multi-symbol copy.
+    std::vector<Symbol> all_symbols() const;
+
     // Total order count across all symbols.
     std::size_t total_orders() const;
 

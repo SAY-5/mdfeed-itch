@@ -54,6 +54,9 @@ add_library(mdfeed_itch_core STATIC
   src/recovery/snapshot_client.cpp
   src/sim/publisher.cpp
   src/sim/snapshot_server.cpp
+  src/sim/book_snapshot.cpp
+  src/sim/book_snapshot_publisher.cpp
+  src/sim/book_snapshot_subscriber.cpp
   src/pcap/pcap_io.cpp
   src/obs/histogram.cpp
   src/obs/clock.cpp
@@ -95,6 +98,9 @@ mdfeed_add_test(parser_property_test      tests/property/parser_property_test.cp
 mdfeed_add_test(depth_book_property_test  tests/property/depth_book_property_test.cpp)
 mdfeed_add_test(gap_detector_property_test tests/property/gap_detector_property_test.cpp)
 mdfeed_add_test(tsan_stress_test           tests/integration/tsan_stress_test.cpp)
+
+mdfeed_add_test(book_snapshot_test         tests/unit/book_snapshot_test.cpp)
+mdfeed_add_test(book_snapshot_pubsub_test  tests/integration/book_snapshot_pubsub_test.cpp)
 
 mdfeed_add_test(pcap_replay_test           tests/integration/pcap_replay_test.cpp)
 # The pcap_replay test reads the committed captures under tests/pcap/; pass

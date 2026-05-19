@@ -21,6 +21,9 @@ a snapshot+gap-fill request over a TCP control channel.
 - **Snapshot+gap-fill recovery.** A TCP control channel serves a consistent
   snapshot at `last_applied_seq`; the handler re-syncs and continues from the
   next multicast packet that advances the stream.
+- **Book-snapshot publishing.** A TCP service pushes a binary depth-10
+  snapshot of every symbol on a configurable interval or message stride;
+  subscribers rebuild their own book and verify it against the publisher's.
 
 ## How this differs from `SAY-5/mdfeed-handler`
 
@@ -161,6 +164,24 @@ regenerate with `make pcaps`. The replay test validates the handler against
 an independent direct decode of the committed capture, so it is robust
 regardless of which platform generated the pcap. Full write-up:
 `docs/pcap-replay.md`.
+
+## Book snapshot publishing
+
+`BookSnapshotPublisher` is a TCP service that pushes a binary snapshot of the
+full depth-10 book, every symbol, to connected subscribers. The trigger is a
+`BookSnapshotPolicy`: a time interval, an applied-message stride, or both.
+The publisher takes its consistent copy under the same lock that guards book
+mutations, then releases the lock before serialising and writing to any
+socket, so a slow subscriber never back-pressures the multicast receive hot
+path. A `BookSnapshotSubscriber` connects, reads length-prefixed frames,
+verifies a CRC-32 over each body, and rebuilds its own depth-10 book per
+symbol.
+
+The integration test `book_snapshot_pubsub_test` runs one publisher and one
+subscriber over loopback TCP: after a multicast feed run, the subscriber's
+reconstructed book is byte-equal to the publisher's reference for every
+symbol, and a deliberately stalled subscriber is shown not to block the feed
+thread. Wire layout: `docs/snapshot-wire.md`.
 
 ## What this is NOT
 

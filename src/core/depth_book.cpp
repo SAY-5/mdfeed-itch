@@ -192,6 +192,13 @@ std::optional<Symbol> DepthBook::symbol_for_order(OrderId id) const {
     return sit->second;
 }
 
+std::vector<Symbol> DepthBook::all_symbols() const {
+    std::vector<Symbol> out;
+    out.reserve(symbol_index_.size());
+    for (const auto& [_, sym] : symbol_index_) out.push_back(sym);
+    return out;
+}
+
 std::size_t DepthBook::total_orders() const {
     std::size_t n = 0;
     for (const auto& [_, b] : books_) n += b.order_count();

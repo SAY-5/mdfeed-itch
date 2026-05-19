@@ -38,6 +38,9 @@ publisher (sim) ─── multicast UDP (239.0.0.x) ───► MulticastReceiv
 | `src/recovery/snapshot_client.cpp` | Snapshot frame encode/decode             |
 | `src/sim/publisher.cpp`    | Deterministic ITCH message generator             |
 | `src/sim/snapshot_server.cpp` | In-test snapshot server                       |
+| `src/sim/book_snapshot.cpp` | Book-snapshot wire format encode/decode + CRC   |
+| `src/sim/book_snapshot_publisher.cpp` | TCP service pushing book snapshots    |
+| `src/sim/book_snapshot_subscriber.cpp` | TCP client rebuilding a local book   |
 | `src/pcap/pcap_io.cpp`     | libpcap-format offline capture reader / writer   |
 | `src/pcap_replay.cpp`      | Offline pcap replay tool                         |
 | `src/pcap_gen.cpp`         | Generator for the committed pcap test captures   |
@@ -81,6 +84,37 @@ the datagrams through the same `FeedHandler` as the live path. The capture is
 an Ethernet / IPv4 / UDP framing of the transport datagram; the reader strips
 the fixed 42-byte header prefix. See `docs/pcap-replay.md` for the CLI, the
 capture format, and the committed test inputs.
+
+## Book snapshot publishing
+
+`BookSnapshotPublisher` is a TCP service that pushes a binary snapshot of the
+full depth-10 book, every symbol, to connected subscribers. A snapshot is
+triggered by either a time interval or an applied-message stride
+(`BookSnapshotPolicy`); setting a trigger to 0 disables it. A subscriber
+(`BookSnapshotSubscriber`) connects, reads length-prefixed snapshot frames,
+verifies the CRC, and rebuilds its own depth-10 book per symbol. The wire
+layout is in `docs/snapshot-wire.md`.
+
+### Hot-path isolation
+
+The multicast receive thread must never block on a slow subscriber. The
+publisher enforces this in two phases:
+
+1. **Capture under lock.** The publisher thread acquires the same mutex the
+   feed uses to guard book mutations, copies out a `BookSnapshot` value, and
+   releases the lock. This window holds nothing but a memory copy; no socket
+   calls happen inside it.
+2. **Serialise and write outside the lock.** Encoding the frame and writing
+   it to every subscriber socket happens entirely after the lock is released.
+   A stalled subscriber whose TCP buffer is full can delay the publisher's
+   own loop but can never back-pressure the feed thread.
+
+The feed hot path only calls `note_message()`, which is a single relaxed
+atomic increment. The integration test `book_snapshot_pubsub_test` asserts
+both properties: the reconstructed book is byte-equal to the publisher's
+reference across all symbols, and a deliberately stalled subscriber does not
+prevent the publisher from publishing or block the lock-acquiring feed
+thread.
 
 ## Build matrix
 
