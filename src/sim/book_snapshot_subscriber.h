@@ -37,6 +37,9 @@ class BookSnapshotSubscriber {
 
     std::vector<itch::Symbol> symbols() const;
 
+    // Unblock a receive_one() in flight on another thread. Call this, join
+    // the reader thread, then call close().
+    void shutdown() { client_.shutdown(); }
     void close() { client_.close(); }
 
   private:

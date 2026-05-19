@@ -23,6 +23,10 @@ class TcpClient {
     bool send_all(const std::uint8_t* data, std::size_t len);
     // Read exactly one length-prefixed frame (4-byte u32 BE length + body).
     bool recv_frame(std::vector<std::uint8_t>& out);
+    // Half-close both directions. Safe to call from another thread while a
+    // recv_frame() is in flight: it unblocks the blocked recv() without
+    // freeing the fd, so the reader can exit before close() is called.
+    void shutdown();
     void close();
     int fd() const { return fd_; }
 

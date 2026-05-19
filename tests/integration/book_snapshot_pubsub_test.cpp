@@ -134,9 +134,12 @@ TEST(BookSnapshotPubSub, CrossProcessBookEqualAllSymbols) {
 
     // Give the subscriber a moment to apply the terminal frames.
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    // Unblock the reader's in-flight recv(), join it, then close the fd. The
+    // shutdown() / join / close() ordering keeps close() from racing recv().
     sub_run.store(false);
-    subscriber.close();
+    subscriber.shutdown();
     if (sub_thread.joinable()) sub_thread.join();
+    subscriber.close();
     publisher.stop();
 
     ASSERT_GT(subscriber.frames_applied(), 0u);

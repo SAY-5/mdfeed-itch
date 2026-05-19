@@ -31,6 +31,12 @@ TcpClient::~TcpClient() {
     close();
 }
 
+void TcpClient::shutdown() {
+    if (fd_ >= 0) {
+        ::shutdown(fd_, SHUT_RDWR);
+    }
+}
+
 void TcpClient::close() {
     if (fd_ >= 0) {
         ::close(fd_);
